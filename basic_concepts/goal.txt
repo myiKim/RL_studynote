@@ -1,0 +1,8 @@
+RL concepts I will cover:
+
+1. MDP
+2. MC
+3. TD
+4. QLearning
+5. DQN
+.. so on
