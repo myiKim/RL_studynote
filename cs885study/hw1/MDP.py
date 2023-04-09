@@ -85,12 +85,10 @@ class MDP:
         Ouput:
         V -- Value function: array of |S| entries'''
 
-        # temporary values to ensure that the code compiles until this
-        # function is coded
         statespace = list(range(self.nStates))
         
-        Ta = T[policy,statespace]
-        Ra = R[policy,statespace]
+        Ta = self.T[policy,statespace]
+        Ra = self.R[policy,statespace]
         A = np.identity(len(Ta)) - (self.discount * Ta)
         # V = LA.solve(A, Ra)
         V = np.matmul(np.linalg.inv(A), Ra)
@@ -110,11 +108,17 @@ class MDP:
         V -- Value function: array of |S| entries
         iterId -- # of iterations peformed by modified policy iteration: scalar'''
 
-        # temporary values to ensure that the code compiles until this
-        # function is coded
-        policy = np.zeros(self.nStates)
+        policy = initialPolicy.astype(int)
         V = np.zeros(self.nStates)
         iterId = 0
+        while True:
+            #evaluate policy
+            V = self.evaluatePolicy(policy)
+            #improve policy
+            policy, past_policy = self.extractPolicy(V), policy
+            if all([p==pp for p, pp in zip(policy, past_policy)]):                
+                break
+            iterId+=1
 
         return [policy,V,iterId]
             
@@ -133,11 +137,18 @@ class MDP:
         iterId -- # of iterations performed: scalar
         epsilon -- ||V^n-V^n+1||_inf: scalar'''
 
-        # temporary values to ensure that the code compiles until this
-        # function is coded
-        V = np.zeros(self.nStates)
+        V = initialV
         iterId = 0
-        epsilon = 0
+        statespace = list(range(self.nStates))
+        Tpi = T[policy,statespace]
+        Rpi = R[policy,statespace]       
+
+        while True:
+            V, pastV =  Rpi + (self.discount * np.matmul(Tpi, V)), V            
+            epsilon =  LA.norm(V-pastV, ord= np.inf)                
+            if epsilon < tolerance or iterId>nIterations:
+                break
+            iterId +=1          
 
         return [V,iterId,epsilon]
 
@@ -159,12 +170,22 @@ class MDP:
         iterId -- # of iterations peformed by modified policy iteration: scalar
         epsilon -- ||V^n-V^n+1||_inf: scalar'''
 
-        # temporary values to ensure that the code compiles until this
-        # function is coded
-        policy = np.zeros(self.nStates)
-        V = np.zeros(self.nStates)
+        policy = initialPolicy
+        V = initialV
         iterId = 0
-        epsilon = 0
+        
+        while True:            
+            #Partially Evaluate the given policy
+            Vnew, _, _  = self.evaluatePolicyPartially1(policy, V, nIterations=nEvalIterations, tolerance=0.01)
+
+            #induce the policy from the estimated V (record the policy)
+            policy = self.extractPolicy1(Vnew)
+            epsilon = max(abs(Vnew - V))
+            V = Vnew
+
+            if epsilon < tolerance or iterId>nIterations:
+                break      
+            iterId += 1
 
         return [policy,V,iterId,epsilon]
         
