@@ -173,19 +173,20 @@ class MDP:
         policy = initialPolicy
         V = initialV
         iterId = 0
-        
-        while True:            
+        while True:
+            
             #Partially Evaluate the given policy
-            Vnew, _, _  = self.evaluatePolicyPartially1(policy, V, nIterations=nEvalIterations, tolerance=0.01)
+            V, _, _  = self.evaluatePolicyPartially1(policy, V, nIterations=nEvalIterations, tolerance=0.01)
 
-            #induce the policy from the estimated V (record the policy)
-            policy = self.extractPolicy1(Vnew)
-            epsilon = max(abs(Vnew - V))
-            V = Vnew
-
+            Valist = []
+            for i in range(self.nActions):
+                Va= self.R[i]+ self.discount * np.matmul(self.T[i] ,V)
+                Valist.append(Va)
+            policy = np.argmax(Valist,0)
+            V, pastV = np.max(Valist, 0), V
+            epsilon =  LA.norm(V-pastV, ord= np.inf)                
             if epsilon < tolerance or iterId>nIterations:
-                break      
-            iterId += 1
-
+                break          
+            iterId +=1
         return [policy,V,iterId,epsilon]
         
