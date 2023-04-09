@@ -176,11 +176,11 @@ class MDP:
         while True:
             
             #Partially Evaluate the given policy
-            V, _, _  = self.evaluatePolicyPartially1(policy, V, nIterations=nEvalIterations, tolerance=0.01)
+            V, _, _  = self.evaluatePolicyPartially(policy, V, nIterations=nEvalIterations, tolerance=0.01)
 
             Valist = []
             for i in range(self.nActions):
-                Va= self.R[i]+ self.discount * np.matmul(self.T[i] ,V)
+                Va= self.R[i]+ self.discount * np.dot(self.T[i] ,V)
                 Valist.append(Va)
             policy = np.argmax(Valist,0)
             V, pastV = np.max(Valist, 0), V
