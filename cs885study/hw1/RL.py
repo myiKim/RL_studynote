@@ -66,7 +66,11 @@ class RL:
                 else:
 
                     policy = np.argmax(Q,0)
-                    action = policy[state] #temporarily
+                    weight = np.exp(Q[:,state] / temperature)
+                    weight /= np.sum(weight)
+                    #print("weight: ", weight, "Q", Q[:,state])
+                    action_space = list(range(mdp.nActions))
+                    action = np.random.choice(action_space, mdp.nActions, p=weight)
                     
                 visited[action, state] +=1
 
