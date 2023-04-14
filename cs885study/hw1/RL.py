@@ -53,32 +53,41 @@ class RL:
         policy -- final policy
         '''
         #the solution is not perfect yet. (23/04/09)
-        import random
         Q = initialQ
         policy = np.zeros(self.mdp.nStates,int)
-
+        #visited = np.zeros([mdp.nActions,mdp.nStates])
         for i in range(nEpisodes):
-            visited = np.zeros([mdp.nActions,mdp.nStates])
+            visited = np.zeros([mdp.nActions,mdp.nStates]) #here or there?
             state = s0
             for step in range(nSteps):
-                if random.uniform(0, 1) < epsilon:
-                    action =  np.random.randint(0, mdp.nActions)
+                if temperature==0:
+                    #action =  np.random.randint(0, mdp.nActions)
+                    action = np.argmax(Q, axis=0)[state]
                 else:
+                    if np.random.uniform(0, 1) < epsilon:
+                        action =  np.random.randint(0, mdp.nActions)
+                    else:
 
-                    policy = np.argmax(Q,0)
-                    action = policy[state] #temporarily
-                    
+                        policy = np.argmax(Q,0)
+                        weight = np.exp(Q[:,state] / temperature)
+                        weight /= np.sum(weight)
+                        #print("weight: ", weight, "Q", Q[:,state])
+                        action_space = list(range(mdp.nActions))
+                        action = np.random.choice(action_space, mdp.nActions, p=weight)                    
+
+                #observe s' and r 
+                reward, state_next = self.sampleRewardAndNextState(state,action) 
+                #update counts n(s,a) <- n(s,a) + 1
                 visited[action, state] +=1
-
-                alpha = 1 / visited[action, state]
-                reward, state_next = self.sampleRewardAndNextState(state,action)
-
+                # defining learning rate alpha <- a/n(s,a)
+                alpha = 1.0 / visited[action, state]
+                
+                #update Q-value
                 td_target = reward + mdp.discount * np.max(Q[:,state_next])
                 Q_delta = alpha * (td_target - Q[action,state])
                 Q[action,state] += Q_delta
-                Q[action,state_next] += Q_delta
+                Q[action][state] = np.round(Q[action][state], 2)
+                # s <- s'
                 state = state_next
                 
-                #print(policy)
-
         return [Q,policy]  
