@@ -52,37 +52,55 @@ class RL:
         Q -- final Q function (|A|x|S| array)
         policy -- final policy
         '''
-        #the solution is not perfect yet. (23/04/09)
-        import random
+        #the solution is not perfect yet. (23/04/16)
         Q = initialQ
         policy = np.zeros(self.mdp.nStates,int)
 
         for i in range(nEpisodes):
-            visited = np.zeros([mdp.nActions,mdp.nStates])
+            visited = np.zeros([self.mdp.nActions, self.mdp.nStates]) 
             state = s0
             for step in range(nSteps):
-                if random.uniform(0, 1) < epsilon:
-                    action =  np.random.randint(0, mdp.nActions)
-                else:
+                
+                # choose an action with exploration
+                if epsilon >0:
+                    if temperature==0:
+                        # if temperature is 0, then there is no way implementing Boltzman exploration ==> So, try epsilon-greedy exploration only
+                        if np.random.uniform(0, 1) < epsilon: # Prb(take this if bloc)=eps
+                            action = np.random.randint(0, self.mdp.nActions)
+                        else: # Prb(take this else bloc)= 1-eps
+                            action = np.argmax(Q[:, state])
+                    else: 
+                        # (when epsilon nonzero and temperature nonzero) do Boltzmann exploration except with epsion prob where we have to do epsilon-greedy.
+                        if np.random.uniform(0, 1) < epsilon: # Prb(take this if bloc)=eps
+                            action = np.random.randint(0, self.mdp.nActions)                        
+                        else: # Prb(take this else bloc)= 1-eps
+                            weight = np.exp(Q[:, state] / temperature)
+                            weight /= np.sum(weight)
+                            action_space = list(range(mdp.nActions))
+                            action = np.random.choice(action_space, p=weight)
 
-                    policy = np.argmax(Q,0)
-                    weight = np.exp(Q[:,state] / temperature)
-                    weight /= np.sum(weight)
-                    #print("weight: ", weight, "Q", Q[:,state])
-                    action_space = list(range(mdp.nActions))
-                    action = np.random.choice(action_space, mdp.nActions, p=weight)
-                    
-                visited[action, state] +=1
+                elif epsilon == 0 and temperature==0: # (when epsilon zero and temperature zero) no exploration
+                    action = np.argmax(Q[:, state])                    
 
-                alpha = 1 / visited[action, state]
+                # observe s' and r 
                 reward, state_next = self.sampleRewardAndNextState(state,action)
 
-                td_target = reward + mdp.discount * np.max(Q[:,state_next])
+                # update counts n(s,a) <- n(s,a) + 1
+                visited[action, state] +=1
+
+                # defining learning rate alpha <- a/n(s,a)
+                alpha = 1.0 / visited[action, state]
+                
+                # update Q-value
+                td_target = reward + self.mdp.discount * np.max(Q[:,state_next])
                 Q_delta = alpha * (td_target - Q[action,state])
                 Q[action,state] += Q_delta
-                Q[action,state_next] += Q_delta
-                state = state_next
                 
-                #print(policy)
+                # save the action that was executed
+                policy[state] = action
 
-        return [Q,policy]  
+                # s <- s'
+                state = state_next                
+
+
+        return [Q,policy]   
