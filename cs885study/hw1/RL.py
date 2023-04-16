@@ -57,7 +57,7 @@ class RL:
         policy = np.zeros(self.mdp.nStates,int)
 
         for i in range(nEpisodes):
-            visited = np.zeros([self.mdp.nActions, self.mdp.nStates]) #here or there?
+            visited = np.zeros([self.mdp.nActions, self.mdp.nStates]) 
             state = s0
             for step in range(nSteps):
                 
@@ -67,18 +67,18 @@ class RL:
                         # if temperature is 0, then there is no way implementing Boltzman exploration ==> So, try epsilon-greedy exploration only
                         if np.random.uniform(0, 1) < epsilon: # Prb(take this if bloc)=eps
                             action = np.random.randint(0, self.mdp.nActions)
-                        else: # Prb(take this if bloc)= 1-eps
+                        else: # Prb(take this else bloc)= 1-eps
                             action = np.argmax(Q[:, state])
                     else: 
                         # (when epsilon nonzero and temperature nonzero) do Boltzmann exploration except with epsion prob where we have to do epsilon-greedy.
                         if np.random.uniform(0, 1) < epsilon: # Prb(take this if bloc)=eps
                             action = np.random.randint(0, self.mdp.nActions)                        
-                        else: # Prb(take this if bloc)= 1-eps
+                        else: # Prb(take this else bloc)= 1-eps
                             weight = np.exp(Q[:, state] / temperature)
                             weight /= np.sum(weight)
                             action_space = list(range(mdp.nActions))
                             action = np.random.choice(action_space, p=weight)
-                            
+
                 elif epsilon == 0 and temperature==0: # (when epsilon zero and temperature zero) no exploration
                     action = np.argmax(Q[:, state])                    
 
@@ -92,7 +92,7 @@ class RL:
                 alpha = 1.0 / visited[action, state]
                 
                 # update Q-value
-                td_target = reward + mdp.discount * np.max(Q[:,state_next])
+                td_target = reward + self.mdp.discount * np.max(Q[:,state_next])
                 Q_delta = alpha * (td_target - Q[action,state])
                 Q[action,state] += Q_delta
                 
