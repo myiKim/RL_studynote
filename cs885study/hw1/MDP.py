@@ -47,7 +47,7 @@ class MDP:
             iterId +=1
             Valist = []
             for i in range(self.nActions):
-                Va= self.R[i]+ self.discount * np.dot(self.T[i] ,V)
+                Va= self.R[i]+ self.discount * np.dot(self.T[i] ,V) #To-do: need to change this style of multiplication
                 Valist.append(Va)
             V, pastV = np.max(Valist,0), V
             epsilon =  LA.norm(V-pastV, ord= np.inf) 
@@ -69,7 +69,7 @@ class MDP:
 
         Valist = []
         for i in range(self.nActions):
-            Va= self.R[i]+ self.discount * np.dot(self.T[i] ,V)
+            Va= self.R[i]+ self.discount * np.dot(self.T[i] ,V) #To-do: need to change this style of multiplication
             Valist.append(Va)
         policy = np.argmax(Valist,0)
 
