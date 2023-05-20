@@ -92,14 +92,33 @@ def train(S,A,returns):
     # Implement the training of the value function (follow slides, doing a gradient update per
     # step in the episode)
     # ....
+    OPT1.zero_grad()
+    values = V(S).squeeze()
+    #values = V(S).view(-1)
+    deltas = returns - values
+    n = torch.arange(S.size(0)).to(DEVICE)
+    value_objective = -((GAMMA**n) *deltas * values).sum()
+    value_objective.backward(retain_graph=True)
+    OPT1.step()
+    
 
     # policy gradient with baseline
     # apply accumulated gradient across the episode
     for i in range(POLICY_TRAIN_ITERS):
+
         # implement objective and update for policy
         # should be similar to REINFORCE + small change
+        OPT2.zero_grad()
+        # collect pi(a | s) for trajectories
+        log_probs = torch.nn.LogSoftmax(dim=-1)(pi(S)).gather(1, A.view(-1, 1)).view(-1)
+        # print('log_probs shape:', log_probs.shape)
+        # print('deltas shape:', deltas.shape)      
+        policy_objective = -((GAMMA**n) * deltas * log_probs).sum()
+        policy_objective.backward(retain_graph=True)
+        OPT2.step()    
         
     #################################
+
 
 # Play episodes
 Rs = [] 
