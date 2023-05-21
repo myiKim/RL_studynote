@@ -89,6 +89,13 @@ def policy(env, obs):
 # A = tensor of actions taken in episode/ batch of episodes
 # return = tensor where nth element is \sum^{T-n}_0 gamma^n * reward (return at step n of episode)
 # old_log_probs = tensor of pi(a | s) for policy the trajectory was collected under
+def standardize_adv(adv):
+  
+  adv_mean = torch.mean(adv)
+  adv_std = torch.std(adv)
+  adv = (adv - adv_mean) / adv_std
+  return adv
+  
 def train(S,A,returns, old_log_probs):
 
     ###############################
@@ -97,6 +104,15 @@ def train(S,A,returns, old_log_probs):
     # Implement the training of the value function
     # Use the same implementation you did in REINFORCE_Baseline.py for estimating the advantage function
     # (instead of following the PPO slides)
+    OPT1.zero_grad()
+    values = V(S).view(-1)
+    adv = returns - values
+    n = torch.arange(S.size(0)).to(DEVICE)
+    # value_objective = -((GAMMA**n) *adv * values).sum()
+    # value_objective.backward(retain_graph=True)
+    adv_objective = - (adv* values).sum()
+    adv_objective.backward(retain_graph = True)
+    OPT1.step()
 
 
     # PPO 
@@ -104,6 +120,21 @@ def train(S,A,returns, old_log_probs):
     for i in range(POLICY_TRAIN_ITERS):
         # implement objective and update for policy
         # follow the slides for this
+        OPT2.zero_grad()
+
+        # Calculate the logits of the current policy
+        cand_log_probs = torch.nn.LogSoftmax(dim=-1)(pi(S)).gather(1, A.view(-1, 1)).view(-1)
+
+        # Calculate the policy ratio
+        policy_ratio = torch.exp(cand_log_probs - old_log_probs)
+
+        # Calculate the surrogate objective
+        surrogate1 = policy_ratio
+        surrogate2 = torch.clamp(policy_ratio, 1 - CLIP_PARAM, 1 + CLIP_PARAM) 
+        surrogate_objective = -1 * torch.mean(torch.min(surrogate1, surrogate2)*  standardize_adv(adv))
+        # surrogate_objective = -1 * torch.mean(torch.min(surrogate1, surrogate2)*  adv)
+        surrogate_objective.backward(retain_graph=True)
+        OPT2.step()    
         
     #################################
 
