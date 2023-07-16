@@ -1,0 +1,42 @@
+<robot name="somebody">
+    <link name="base_link">
+        <visual>
+            <geometry>
+                <cylinder length="0.5" radius="0.2"/>
+            </geometry>
+        </visual>
+        <origin xyz="0 0 7.7"/> <!-- Adjust the z value as needed -->
+    </link>
+
+    <!-- Left Leg -->
+    <link name="left_leg">
+        <visual>
+            <geometry>
+                <cylinder length="0.35" radius="0.1"/>
+            </geometry>
+            <origin rpy="0.78540 0 0"/>
+        </visual>
+    </link>
+    <joint name="base_to_leftleg" type="continuous">
+        <parent link="base_link"/>
+        <child link="left_leg"/>
+        <axis xyz="0 1 0"/>
+        <origin xyz="-0.2 0.175 0"/>
+    </joint>
+
+    <!-- Right Leg -->
+    <link name="right_leg">
+        <visual>
+            <geometry>
+                <cylinder length="0.35" radius="0.1"/>
+            </geometry>
+            <origin rpy="-0.78540 0 0"/>
+        </visual>
+    </link>
+    <joint name="base_to_rightleg" type="continuous">
+        <parent link="base_link"/>
+        <child link="right_leg"/>
+        <axis xyz="0 1 0"/>
+        <origin xyz="-0.2 -0.175 0"/>
+    </joint>
+</robot>
